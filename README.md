@@ -1,11 +1,11 @@
-##Composer Install
+## Composer Install
 ```shell
 composer require "amber-core/rbac"
 ```
 
-##Examples
+## Examples
 
-###RbacDictionary 
+### RbacDictionary 
 ```injectablephp
 class RbacDictionary implements RbacDictionaryInterface
 {
@@ -61,7 +61,7 @@ class RbacDictionary implements RbacDictionaryInterface
 }
 ```
 
-###RbacManager Using
+### RbacManager Using
 
 ```injectablephp
 
