@@ -11,7 +11,7 @@ composer require "amber-core/rbac"
 if($access_manager->canUser(
     RbacDictionary::PERMISSION_WORKER_DELETE,
     $user,
-    ['worker_id' => $worker->getId()]
+    ['worker' => $worker]
 ))
 {
     $worker->delete();
@@ -54,8 +54,10 @@ class RbacDictionary implements RbacDictionaryInterface
     public const
         // Workers Permissions
         PERMISSION_WORKER_CREATE = 'worker_create',
+        PERMISSION_WORKER_READ = 'worker_read',
         PERMISSION_WORKER_UPDATE = 'worker_update',
-        PERMISSION_WORKER_VIEW = 'worker_view',
+        PERMISSION_WORKER_DELETE = 'worker_delete',
+        
         PERMISSION_WORKER_LIST_VIEW = 'worker_list_view',
 
         PERMISSIONS =
@@ -69,10 +71,11 @@ class RbacDictionary implements RbacDictionaryInterface
                 'role' => UserRoleDictionary::ROLE_USER,
                 self::PERMISSION_WORKER_CREATE,
                 self::PERMISSION_WORKER_UPDATE,
+                self::PERMISSION_WORKER_DELETE,
             ],
             UserRoleDictionary::ROLE_USER => [
                 self::PERMISSION_WORKER_LIST_VIEW,
-                self::PERMISSION_WORKER_VIEW,
+                self::PERMISSION_WORKER_READ,
             ]
         ],
 
@@ -82,7 +85,8 @@ class RbacDictionary implements RbacDictionaryInterface
             // otherwise rbac will return true if permission in the rule description
             // or false if not
             self::PERMISSION_WORKER_UPDATE => WorkerUpdateRule::class,
-            self::PERMISSION_WORKER_VIEW => WorkerViewRule::class,
+            self::PERMISSION_WORKER_DELETE => WorkerDeleteRule::class,
+            self::PERMISSION_WORKER_READ => WorkerViewRule::class,
         ];
 
     public static function getPermissions(string $role): array
@@ -98,6 +102,50 @@ class RbacDictionary implements RbacDictionaryInterface
         }
 
         return null;
+    }
+}
+```
+
+### Rule Sample
+
+```php
+class WorkerDeleteRule extends \AmberCore\Rbac\Rules\AbstractRule
+{
+    /**
+    * @param UserEntity $user
+    * @param array|null $arguments
+    * @return bool
+    */
+    public function execute(\AmberCore\Rbac\UserRbacInterface $user, ?array $arguments): bool
+    {
+        /** @var UserEntity $worker */
+        $worker = $arguments['worker'];
+
+        return
+            // return true if they are in the one company
+            $this->checkRule(
+                IsInOneCompanyRule::class,
+                $user,
+                ['user' => $worker]
+            ) &&
+            // return true if user is manager for this worker
+            $user->isManagerForWorker($worker);
+    }
+}
+
+class IsInOneCompanyRule extends \AmberCore\Rbac\Rules\AbstractRule
+{
+    /**
+    * @param UserEntity $user
+    * @param array|null $arguments
+    * @return bool
+    */
+    public function execute(\AmberCore\Rbac\UserRbacInterface $user, ?array $arguments): bool
+    {
+        /** @var UserEntity $target_user */
+        $target_user = $arguments['user'];
+
+        return $user->getCompany()->getId() === $target_user->getCompany()->getId();
     }
 }
 ```
