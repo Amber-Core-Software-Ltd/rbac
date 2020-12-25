@@ -1,12 +1,53 @@
-## Composer Install
+# Composer Install
 ```shell
 composer require "amber-core/rbac"
 ```
 
-## Examples
+# Using
 
-### RbacDictionary 
-```injectablephp
+## RbacManager Using
+
+```php
+if($access_manager->canUser(
+    RbacDictionary::PERMISSION_WORKER_DELETE,
+    $user,
+    ['worker_id' => $worker->getId()]
+))
+{
+    $worker->delete();
+}
+```
+
+### Access Manager Sample
+
+```php
+class AccessManager
+{
+    private $rbac;
+    
+    public function __construct()
+    {
+        $this->rbac = new \AmberCore\Rbac\RbacManager($this->getRbacDictionary());
+    }
+
+    public function getRbacDictionary(): \AmberCore\Rbac\RbacDictionaryInterface
+    {
+        return new RbacDictionary();
+    }
+    
+    public function canUser(
+        string $permission_name,
+        \AmberCore\Rbac\UserRbacInterface $user,
+        ?array $arguments
+    ): bool 
+    {
+        return $this->rbac->isGranted($permission_name, $user, $arguments); 
+    }
+}
+```
+
+### RbacDictionary Sample
+```php
 class RbacDictionary implements RbacDictionaryInterface
 {
 
@@ -58,44 +99,5 @@ class RbacDictionary implements RbacDictionaryInterface
 
         return null;
     }
-}
-```
-
-### RbacManager Using
-
-```injectablephp
-
-class AccessManager
-{
-    private $rbac;
-    
-    public function __construct()
-    {
-        $this->rbac = new \AmberCore\Rbac\RbacManager($this->getRbacDictionary());
-    }
-
-    public function getRbacDictionary(): \AmberCore\Rbac\RbacDictionaryInterface
-    {
-        return new RbacDictionary();
-    }
-    
-    public function canUser(
-        string $permission_name,
-        \AmberCore\Rbac\UserRbacInterface $user,
-        ?array $arguments
-    ): bool 
-    {
-        return $this->rbac->isGranted($permission_name, $user, $arguments); 
-    }
-}
-...
-
-if($access_manager->canUser(
-    RbacDictionary::PERMISSION_WORKER_DELETE,
-    $user,
-    ['worker_id' => $worker->getId()]
-))
-{
-    $worker->delete();
 }
 ```
